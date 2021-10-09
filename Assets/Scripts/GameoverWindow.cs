@@ -6,21 +6,21 @@ using UnityEngine.SceneManagement;
 
 public class GameoverWindow : MonoBehaviour
 {
-    [SerializeField] GameObject gameOverWindowObject; // todo make band aid fix for making show() work better
+    [SerializeField] GameObject gameOverWindowObject;
 
     private Text scoreText;
     private Text highscoreText;
 
     private void Awake()
     {
-        scoreText = transform.Find("gameOverScoreText").GetComponent<Text>(); //string referenced
+        scoreText = transform.Find("gameOverScoreText").GetComponent<Text>();
         highscoreText = transform.Find("highscoreText").GetComponent<Text>();
     }
 
     private void Start()
     {
         Player.GetInstance().OnDeath += PopUpOnDeath;
-        Hide(); // this ahs to be in start, so show() can actually work
+        Hide();
     }
 
     private void PopUpOnDeath(object sender, System.EventArgs e)
@@ -30,7 +30,7 @@ public class GameoverWindow : MonoBehaviour
         {
             SaveHighscore(currentScore);
         }
-        scoreText.text = currentScore.ToString(); // this session's score
+        scoreText.text = currentScore.ToString();
         highscoreText.text = PlayerPrefs.GetInt("highscore").ToString();
         Show();
     }

@@ -8,12 +8,12 @@ public class Level : MonoBehaviour
     [SerializeField] float pipeWidth = 9.2f;
     [SerializeField] float pipeHeadHeight = 5.2f;
     private const float pipeMoveSpeed = 32f; // tweakable
-    private const float spawnPipeXPos = 120f; // tweakable but nah, gotta be positive
+    private const float spawnPipeXPos = 120f; // tweakable, gotta be positive
     private const float birdXPosition = 0f;
 
     private static Level instance;
 
-    public static Level GetInstance() // makes this public methods in this level-instance be able to be called in other scripts without typing extra stuff in the other script
+    public static Level GetInstance()
     {
         return instance;
     }
@@ -22,7 +22,7 @@ public class Level : MonoBehaviour
     private int pipesPassedCount;
     private int pipesSpawned;
     private float pipeSpawnTimer;
-    private float pipeSpawnTimerMax = 1.8f; // tweakable
+    private float pipeSpawnTimerMax = 1.8f;
     private float gapSize;
     private bool playerDead = false;
 
@@ -30,12 +30,12 @@ public class Level : MonoBehaviour
     {
         instance = this;
         pipeList = new List<Pipe>();
-        gapSize = 50f; // todo, make band aid fix for cucked first pipes not having gap into better fix
+        gapSize = 50f;
     }
 
     private void Start()
     {
-        Player.GetInstance().OnDeath += Level_OnDeath; // subscribe to palyer OnDeath event
+        Player.GetInstance().OnDeath += Level_OnDeath;
     }
 
     private void Level_OnDeath(object sender, System.EventArgs e)
@@ -57,7 +57,7 @@ public class Level : MonoBehaviour
         pipeSpawnTimer -= Time.deltaTime;
         if (pipeSpawnTimer < 0)
         {
-            pipeSpawnTimer += pipeSpawnTimerMax; //add time til spawning another pipe
+            pipeSpawnTimer += pipeSpawnTimerMax;
 
             float heightEdgeLimit = 9f; // tweakable
             float totalHeight = cameraOrthoSize * 2f;
@@ -69,7 +69,7 @@ public class Level : MonoBehaviour
         }
     }
 
-    private void SetGapSize() // simplified version of difficulty implementation in https://youtu.be/b5Wpni9KPik 41:00
+    private void SetGapSize()
     {
         if (pipesSpawned >= 30) gapSize = 30f;
         else if (pipesSpawned >= 20) gapSize = 37f;
@@ -81,16 +81,15 @@ public class Level : MonoBehaviour
         for (int i = 0; i < pipeList.Count; i++)
         {
             Pipe pipe = pipeList[i];
-            bool isToTheRightOfBird = pipe.GetXPosition() > birdXPosition; // have to use bool
+            bool isToTheRightOfBird = pipe.GetXPosition() > birdXPosition;
             pipe.Move();
-            if (isToTheRightOfBird && pipe.GetXPosition() <= birdXPosition) // if pipe is to the right of bird && to the left of bird at the same time, middle of pipe
+            if (isToTheRightOfBird && pipe.GetXPosition() <= birdXPosition) // if pipe is to the right of player && to the left of bird at the same time, middle of pipe
             {
                 pipesPassedCount++;
                 SoundManager.PlaySound(SoundManager.SoundType.Score);
             }
-            if (pipe.GetXPosition() < -spawnPipeXPos) // exact position of pipe spawn position, but the other side of the screen (both off-screen)
+            if (pipe.GetXPosition() < -spawnPipeXPos)
             {
-                //destroy pipe
                 pipe.DestroySelf();
                 pipeList.Remove(pipe);
                 i--;
@@ -106,25 +105,8 @@ public class Level : MonoBehaviour
     }
     private void CreatePipe(float height, float xPosition, bool createOnBottom)
     {
-        // CREATES PIPE HEAD
-        Transform pipeHead = Instantiate(GameAssets.GetInstance().pfPipeHead);
-        float pipeHeadYPosition = -cameraOrthoSize + height - pipeHeadHeight * 0.5f;
-        if (!createOnBottom)
-        {
-            pipeHeadYPosition *= -1;  // inverst pipe spawn position, so it's on screen's top
-            pipeHead.localScale = new Vector3(1, -1, 1); //inverts actual pipe head
-        }
-        pipeHead.position = new Vector3(xPosition, pipeHeadYPosition);
-
-        // CREATES PIPE BODY
-        Transform pipeBody = Instantiate(GameAssets.GetInstance().pfPipeBody);
-        float pipeBodyYPosition = -cameraOrthoSize;
-        if (!createOnBottom)
-        {
-            pipeBodyYPosition *= -1; // inverts pipe body spawn position
-            pipeBody.localScale = new Vector3(1, -1, 1); // inverts actual pipe body
-        }
-        pipeBody.position = new Vector3(xPosition, pipeBodyYPosition);
+        Transform pipeHead = InstantiatePipeHeadWithPosition(height, xPosition, createOnBottom);
+        Transform pipeBody = InstantiatePipeBodyWithPosition(xPosition, createOnBottom);
 
         SpriteRenderer pipeBodySpriteRenderer = pipeBody.GetComponent<SpriteRenderer>();
         pipeBodySpriteRenderer.size = new Vector2(pipeWidth, height);
@@ -137,12 +119,39 @@ public class Level : MonoBehaviour
         pipeList.Add(pipe);
     }
 
-    public int GetPipesPassed()
+    private Transform InstantiatePipeHeadWithPosition(float height, float xPosition, bool createOnBottom)
     {
-        return pipesPassedCount / 2; // todo make bandaid fix into better fix
+        Transform pipeHead = Instantiate(GameAssets.GetInstance().pfPipeHead);
+        float pipeHeadYPosition = -cameraOrthoSize + height - pipeHeadHeight * 0.5f;
+        pipeHeadYPosition = InvertIfOnBottom(xPosition, createOnBottom, pipeHead, pipeHeadYPosition);
+        return pipeHead;
     }
 
-    // REPRESENTS A SINGLE PIPE
+    private Transform InstantiatePipeBodyWithPosition(float xPosition, bool createOnBottom)
+    {
+        Transform pipeBody = Instantiate(GameAssets.GetInstance().pfPipeBody);
+        float pipeBodyYPosition = -cameraOrthoSize;
+        pipeBodyYPosition = InvertIfOnBottom(xPosition, createOnBottom, pipeBody, pipeBodyYPosition);
+        return pipeBody;
+    }
+
+    private static float InvertIfOnBottom(float xPosition, bool createOnBottom, Transform pipePart, float pipePartYPosition)
+    {
+        if (!createOnBottom)
+        {
+            pipePartYPosition *= -1; // inverts pipe body spawn position
+            pipePart.localScale = new Vector3(1, -1, 1); // inverts actual pipe body
+        }
+        pipePart.position = new Vector2(xPosition, pipePartYPosition);
+        return pipePartYPosition;
+    }
+
+    public int GetPipesPassed()
+    {
+        return pipesPassedCount / 2;
+    }
+
+
     private class Pipe
     {
         private Transform pipeHeadTransform;
@@ -160,7 +169,7 @@ public class Level : MonoBehaviour
         }
         public float GetXPosition()
         {
-            return pipeHeadTransform.position.x; //this is fine cause head & body has the same x
+            return pipeHeadTransform.position.x;
         }
         public void DestroySelf()
         {

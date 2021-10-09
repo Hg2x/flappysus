@@ -8,7 +8,7 @@ public class Player : MonoBehaviour
 {
     [SerializeField] private float jumpAmount = 60f;
 
-    private Animator animator; // for ground animation which is on by default
+    private Animator animator;
     private Rigidbody2D rigidbody2d;
     public event EventHandler OnDeath;
     private static Player instance;
@@ -44,7 +44,7 @@ public class Player : MonoBehaviour
         rigidbody2d.bodyType = RigidbodyType2D.Static;
         playerDead = true;
         animator.GetComponent<Animator>().enabled = false;
-        if (OnDeath != null) OnDeath(this, EventArgs.Empty); // todo read up on this
+        if (OnDeath != null) OnDeath(this, EventArgs.Empty);
         SoundManager.PlaySound(SoundManager.SoundType.Lose);
     }
 }
