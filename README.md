@@ -1,4 +1,4 @@
-# flappysus
+# Flappy SUS
 
 Amogus themed flappy bird game. A personal game project I made in unity, works for android and PC.
 Simple and fun.
